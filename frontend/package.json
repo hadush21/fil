@@ -10,9 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.4",
     "@tailwindcss/vite": "^4.2.4",
+    "axios": "^1.15.2",
+    "postcss": "^8.5.12",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
@@ -22,6 +26,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.5.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
