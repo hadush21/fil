@@ -1,9 +1,9 @@
 import { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 const LoginPage = () => {
-  const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
-  axios.defaults.baseURL = API_URL;
+  const navigate = useNavigate(); // ✅ FIX 1
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,35 +23,28 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "/api/login",
-        {
-          email: email.trim(),
-          password: password.trim(),
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // ✅ FIX 2: remove /api (already in axios baseURL)
+      const res = await api.post("/login", {
+        email: email.trim(),
+        password: password.trim(),
+      });
 
       console.log("LOGIN SUCCESS:", res.data);
 
       localStorage.setItem("token", res.data.token);
 
-      axios.defaults.headers.common["Authorization"] =
-        `Bearer ${res.data.token}`;
+      // optional safety (not required if interceptor exists)
+      api.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${res.data.token}`;
 
-      window.location.replace("/");
+      navigate("/home"); // ✅ FIX 1
+
     } catch (err) {
       console.log("LOGIN ERROR:", err);
 
       if (err.request && !err.response) {
-        setError(
-          `Cannot reach backend at ${API_URL}. Is the backend running?`
-        );
+        setError("Cannot reach backend. Is server running?");
       } else {
         setError(err.response?.data?.message || "Login failed");
       }
