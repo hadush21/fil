@@ -2,77 +2,110 @@ import { useState } from "react";
 import axios from "axios";
 
 const LoginPage = () => {
+  const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+  axios.defaults.baseURL = API_URL;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    try {
-      const res = await axios.post("http://localhost:8000/api/login", {
-        email,
-        password,
-      });
+    setError("");
 
-      console.log(res.data);
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await axios.post(
+        "/api/login",
+        {
+          email: email.trim(),
+          password: password.trim(),
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("LOGIN SUCCESS:", res.data);
 
       localStorage.setItem("token", res.data.token);
 
-      window.location.href = "/";
+      axios.defaults.headers.common["Authorization"] =
+        `Bearer ${res.data.token}`;
+
+      window.location.replace("/");
     } catch (err) {
-      alert("Login failed");
+      console.log("LOGIN ERROR:", err);
+
+      if (err.request && !err.response) {
+        setError(
+          `Cannot reach backend at ${API_URL}. Is the backend running?`
+        );
+      } else {
+        setError(err.response?.data?.message || "Login failed");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
 
-        <h2 className="text-3xl font-bold text-center text-gray-800">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+
+        <h2 className="text-2xl font-bold mb-6 text-center">
           Login
         </h2>
 
+        {error && (
+          <div className="mb-4 p-3 text-red-700 bg-red-100 rounded">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="email@example.com"
-              className="w-full px-4 py-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full border p-3 rounded"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full px-4 py-2 mt-1 border rounded-md focus:ring-2 focus:ring-blue-500"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full border p-3 rounded"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-          {/* Button */}
           <button
             type="submit"
-            className="w-full py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            disabled={loading}
+            className={`w-full p-3 text-white rounded ${
+              loading
+                ? "bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Sign In
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
-
       </div>
     </div>
   );
