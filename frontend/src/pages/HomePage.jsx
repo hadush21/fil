@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 
-// ✅ Month helper
+// ================= MONTH HELPER =================
 const getMonthName = (month) => {
   const months = [
     "September",
@@ -32,6 +32,7 @@ const getMonthName = (month) => {
 const HomePage = () => {
   const navigate = useNavigate();
 
+  // ================= FORM STATE =================
   const [formData, setFormData] = useState({
     title: "",
     month: new Date().getMonth() + 1,
@@ -43,7 +44,7 @@ const HomePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ GET REPORTS
+  // ================= FETCH REPORTS =================
   useEffect(() => {
     const fetchReports = async () => {
       try {
@@ -51,7 +52,7 @@ const HomePage = () => {
         const res = await api.get("/reports");
         setReports(res.data || []);
       } catch (err) {
-        console.log(err);
+        console.log("FETCH ERROR:", err.response?.data || err.message);
       } finally {
         setLoading(false);
       }
@@ -60,42 +61,34 @@ const HomePage = () => {
     fetchReports();
   }, []);
 
-  // ✅ CREATE REPORT (WITH VALIDATION)
+  // ================= CREATE REPORT =================
   const handleCreateReport = async (e) => {
     e.preventDefault();
     setError("");
 
-    // 🔥 VALIDATION
-    if (!formData.title.trim()) {
-      setError("❌ Title is required");
-      return;
-    }
+    const title = formData.title.trim();
+    const month = Number(formData.month);
+    const year = Number(formData.year);
+    const opening_balance = Number(formData.opening_balance);
 
-    if (!formData.month || formData.month < 1 || formData.month > 12) {
-      setError("❌ Month must be between 1 and 12");
-      return;
-    }
-
-    if (!formData.year) {
-      setError("❌ Year is required");
-      return;
-    }
-
-    if (formData.opening_balance === "") {
-      setError("❌ Opening balance is required");
-      return;
-    }
+    // ================= VALIDATION =================
+    if (!title) return setError("❌ Title is required");
+    if (month < 1 || month > 12) return setError("❌ Month must be 1-12");
+    if (!year) return setError("❌ Year is required");
+    if (formData.opening_balance === "")
+      return setError("❌ Opening balance is required");
 
     try {
       const res = await api.post("/reports", {
-        title: formData.title.trim(),
-        month: Number(formData.month),
-        year: Number(formData.year),
-        opening_balance: parseFloat(formData.opening_balance),
+        title,
+        month,
+        year,
+        opening_balance,
       });
 
       setReports([res.data, ...reports]);
 
+      // reset form
       setFormData({
         title: "",
         month: new Date().getMonth() + 1,
@@ -105,12 +98,14 @@ const HomePage = () => {
 
       navigate(`/reports/${res.data.id}`);
     } catch (err) {
-      console.log(err);
-      setError("❌ Failed to create report");
+      console.log("CREATE ERROR:", err.response?.data || err.message);
+      setError(
+        err.response?.data?.message || "❌ Failed to create report"
+      );
     }
   };
 
-  // ✅ DELETE REPORT
+  // ================= DELETE REPORT =================
   const handleDeleteReport = async (e, id) => {
     e.stopPropagation();
 
@@ -120,19 +115,20 @@ const HomePage = () => {
       await api.delete(`/reports/${id}`);
       setReports(reports.filter((r) => r.id !== id));
     } catch (err) {
-      console.log(err);
+      console.log("DELETE ERROR:", err.response?.data || err.message);
     }
   };
 
+  // ================= LOGOUT =================
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/");
+    navigate("/login");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
 
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <header className="max-w-2xl mx-auto mb-6 flex flex-col items-start">
 
         <button
@@ -140,6 +136,7 @@ const HomePage = () => {
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-red-600 mb-4"
         >
           <ArrowLeft size={20} />
+          Logout
         </button>
 
         <div className="w-full flex justify-between items-center border-b pb-4">
@@ -153,9 +150,7 @@ const HomePage = () => {
 
       <main className="max-w-2xl mx-auto space-y-8">
 
-      
-  
-        {/* CREATE FORM */}
+        {/* ================= CREATE FORM ================= */}
         <section className="bg-white p-6 rounded-2xl shadow">
 
           <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
@@ -163,7 +158,7 @@ const HomePage = () => {
             Start New Report
           </h2>
 
-          {/* ❌ ERROR DISPLAY */}
+          {/* ERROR */}
           {error && (
             <div className="mb-3 p-3 text-red-700 bg-red-100 rounded">
               {error}
@@ -189,7 +184,10 @@ const HomePage = () => {
                 placeholder="Month (1-12)"
                 value={formData.month}
                 onChange={(e) =>
-                  setFormData({ ...formData, month: e.target.value })
+                  setFormData({
+                    ...formData,
+                    month: e.target.value,
+                  })
                 }
               />
 
@@ -199,7 +197,10 @@ const HomePage = () => {
                 placeholder="Year"
                 value={formData.year}
                 onChange={(e) =>
-                  setFormData({ ...formData, year: e.target.value })
+                  setFormData({
+                    ...formData,
+                    year: e.target.value,
+                  })
                 }
               />
 
@@ -219,19 +220,21 @@ const HomePage = () => {
             />
 
             <button className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">
-              Create
+              Create Report
             </button>
 
           </form>
         </section>
 
-        {/* REPORT LIST */}
+        {/* ================= REPORT LIST ================= */}
         <section className="space-y-3">
 
+          {/* HEADER ADDED */}
+          <h2 className="text-lg font-bold text-gray-800">
+            All Reports
+          </h2>
+
           {loading && <p>Loading...</p>}
-          <h2 className="text-lg font-bold text-gray-800 mb-3">
-  All Reports
-</h2>
 
           {reports.map((report) => (
             <div

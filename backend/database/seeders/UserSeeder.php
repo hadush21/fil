@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'Admin',
             'email' => 'admin@ahaz.com',
-            'password' => bcrypt('ahaz1234')
+            'password' => Hash::make('ahaz1234'),
         ]);
     }
 }
